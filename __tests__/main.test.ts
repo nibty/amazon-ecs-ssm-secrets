@@ -18,6 +18,8 @@ const setFailedMock = jest.spyOn(core, 'setFailed')
 // Mock the action's main function
 const runMock = jest.spyOn(main, 'run')
 
+jest.mock('@aws-sdk/client-ssm')
+
 describe('action', () => {
   beforeEach(() => {
     jest.clearAllMocks()

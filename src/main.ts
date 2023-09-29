@@ -1,5 +1,12 @@
 import * as core from '@actions/core'
 import { SSMClient, PutParameterCommand } from '@aws-sdk/client-ssm'
+import { updateTaskDef } from './task-def'
+
+export interface Vars {
+  [key: string]: any
+}
+
+const defaultVars: Vars = {}
 
 /**
  * The main function for the action.
@@ -13,11 +20,19 @@ export async function run(): Promise<void> {
     const secrets = core.getInput('secrets', { required: false })
     const prefix = core.getInput('prefix', { required: false })
     const ignorePattern = core.getInput('ignore-pattern', { required: false })
+    const taskDefinitionFile = core.getInput('task-definition', {
+      required: true
+    })
+    const containerName = core.getInput('container-name', { required: true })
+    const allowRemoval = core.getInput('allow-removal', { required: false })
+
     const ignoreRe = new RegExp(ignorePattern)
     const client = new SSMClient()
 
+    let parsedEnvironmentVariables: Vars = defaultVars
+    let parsedSecrets: Vars = defaultVars
+
     if (environmentVariables) {
-      let parsedEnvironmentVariables = []
       try {
         parsedEnvironmentVariables = JSON.parse(environmentVariables)
       } catch (e) {
@@ -27,6 +42,7 @@ export async function run(): Promise<void> {
       for (const key in parsedEnvironmentVariables) {
         if (ignoreRe.test(key)) {
           core.debug(`ignoring ${key}`)
+          delete parsedEnvironmentVariables[key]
           continue
         }
 
@@ -46,7 +62,6 @@ export async function run(): Promise<void> {
     }
 
     if (secrets) {
-      let parsedSecrets = []
       try {
         parsedSecrets = JSON.parse(secrets)
       } catch (e) {
@@ -56,6 +71,7 @@ export async function run(): Promise<void> {
       for (const key in parsedSecrets) {
         if (ignoreRe.test(key)) {
           core.debug(`ignoring ${key}`)
+          delete parsedSecrets[key]
           continue
         }
 
@@ -72,6 +88,17 @@ export async function run(): Promise<void> {
         const response = await client.send(command)
         core.debug(JSON.stringify(response))
       }
+    }
+
+    if (taskDefinitionFile && containerName) {
+      await updateTaskDef(
+        taskDefinitionFile,
+        containerName,
+        prefix,
+        parsedEnvironmentVariables,
+        parsedSecrets,
+        allowRemoval == 'true'
+      )
     }
   } catch (error) {
     // Fail the workflow run if an error occurs

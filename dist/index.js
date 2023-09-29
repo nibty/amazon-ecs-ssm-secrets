@@ -49139,9 +49139,9 @@ async function run() {
         const prefix = core.getInput('prefix', { required: false });
         const ignorePattern = core.getInput('ignore-pattern', { required: false });
         const taskDefinitionFile = core.getInput('task-definition', {
-            required: true
+            required: false
         });
-        const containerName = core.getInput('container-name', { required: true });
+        const containerName = core.getInput('container-name', { required: false });
         const allowRemoval = core.getInput('allow-removal', { required: false });
         const ignoreRe = new RegExp(ignorePattern);
         const client = new client_ssm_1.SSMClient();

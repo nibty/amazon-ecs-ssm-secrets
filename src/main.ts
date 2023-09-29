@@ -3,7 +3,7 @@ import { SSMClient, PutParameterCommand } from '@aws-sdk/client-ssm'
 import { updateTaskDef } from './task-def'
 
 export interface Vars {
-  [key: string]: any
+  [key: string]: string
 }
 
 const defaultVars: Vars = {}
@@ -97,7 +97,7 @@ export async function run(): Promise<void> {
         prefix,
         parsedEnvironmentVariables,
         parsedSecrets,
-        allowRemoval == 'true'
+        allowRemoval === 'true'
       )
     }
   } catch (error) {

@@ -4,8 +4,13 @@ import fs from 'fs'
 import tmp from 'tmp'
 import { Vars } from './main'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
+import {
+  ContainerDefinition, // eslint-disable-line import/named
+  TaskDefinition, // eslint-disable-line import/named
+  KeyValuePair // eslint-disable-line import/named
+} from '@aws-sdk/client-ecs'
 
-declare var process: {
+declare const process: {
   env: {
     GITHUB_WORKSPACE: string
     RUNNER_TEMP: string
@@ -42,9 +47,6 @@ export async function updateTaskDef(
     `task definition file: ${taskDefinitionFile} and container name: ${containerName}`
   )
 
-  core.debug(`environment variables: ${JSON.stringify(environmentVariables)}`)
-  core.debug(`secrets: ${JSON.stringify(secrets)}`)
-
   // Parse the task definition
   const taskDefPath = path.isAbsolute(taskDefinitionFile)
     ? taskDefinitionFile
@@ -54,18 +56,17 @@ export async function updateTaskDef(
       `Task definition file does not exist: ${taskDefinitionFile}`
     )
   }
-  const taskDefContents = require(taskDefPath)
+  const taskDefContentsStr = fs.readFileSync(taskDefPath, 'utf8')
+  const taskDefContents: TaskDefinition = JSON.parse(taskDefContentsStr)
 
   if (!Array.isArray(taskDefContents.containerDefinitions)) {
     throw new Error(
       'Invalid task definition format: containerDefinitions section is not present or is not an array'
     )
   }
-  const containerDef = taskDefContents.containerDefinitions.find(function (
-    element: any
-  ) {
-    return element.name == containerName
-  })
+  const containerDef = taskDefContents.containerDefinitions.find(
+    (element: ContainerDefinition) => element.name === containerName
+  )
   if (!containerDef) {
     throw new Error(
       'Invalid task definition: Could not find container definition with matching name'
@@ -77,12 +78,20 @@ export async function updateTaskDef(
     containerDef.secrets = []
   }
 
+  if (!containerDef.environment) {
+    containerDef.environment = []
+  }
+
+  if (!containerDef.secrets) {
+    containerDef.secrets = []
+  }
+
   for (const key in environmentVariables) {
     const name = prefix + key
     const value = environmentVariables[key]
 
     const variableDef = containerDef.environment.find(
-      (e: any) => e.name == name
+      (e: KeyValuePair) => e.name === name
     )
     if (variableDef) {
       // If found, update
@@ -91,10 +100,7 @@ export async function updateTaskDef(
     } else {
       // Else, create
       core.debug(`creating secret ${name} in task definition`)
-      containerDef.environment.push({
-        name: name,
-        value: value
-      })
+      containerDef.environment.push({ name, value })
     }
   }
 
@@ -102,7 +108,9 @@ export async function updateTaskDef(
     const name = prefix + key
     const valueFrom = await generateSecretArn(name)
 
-    const variableDef = containerDef.secrets.find((e: any) => e.name == name)
+    const variableDef = containerDef.secrets.find(
+      (e: KeyValuePair) => e.name === name
+    )
     if (variableDef) {
       // If found, update
       core.debug(`updating env ${name} in task definition`)
@@ -110,10 +118,7 @@ export async function updateTaskDef(
     } else {
       // Else, create
       core.debug(`creating env ${name} in task definition`)
-      containerDef.secrets.push({
-        name: name,
-        valueFrom: valueFrom
-      })
+      containerDef.secrets.push({ name, valueFrom })
     }
   }
 

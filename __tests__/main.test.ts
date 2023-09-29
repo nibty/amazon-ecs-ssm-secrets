@@ -13,13 +13,10 @@ import * as main from '../src/main'
 const debugMock = jest.spyOn(core, 'debug')
 const getInputMock = jest.spyOn(core, 'getInput')
 const setFailedMock = jest.spyOn(core, 'setFailed')
-const setOutputMock = jest.spyOn(core, 'setOutput')
+// const setOutputMock = jest.spyOn(core, 'setOutput')
 
 // Mock the action's main function
 const runMock = jest.spyOn(main, 'run')
-
-// Other utilities
-const timeRegex = /^\d{2}:\d{2}:\d{2}/
 
 describe('action', () => {
   beforeEach(() => {
@@ -101,7 +98,7 @@ describe('action', () => {
     )
   })
 
-  it('sets a failed status', async () => {
+  it('sets a failed status for secrets', async () => {
     // Set the action's inputs as return values from core.getInput()
     getInputMock.mockImplementation((name: string): string => {
       switch (name) {

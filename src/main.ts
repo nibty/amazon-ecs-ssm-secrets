@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import Ssm from 'aws-sdk/clients/ssm'
+import { SSMClient, PutParameterCommand } from '@aws-sdk/client-ssm'
 
 /**
  * The main function for the action.
@@ -12,11 +12,12 @@ export async function run(): Promise<void> {
     })
     const secrets = core.getInput('secrets', { required: false })
     const prefix = core.getInput('prefix', { required: false })
-
-    const ssm = new Ssm()
+    const ignorePattern = core.getInput('ignore-pattern', { required: false })
+    const ignoreRe = new RegExp(ignorePattern)
+    const client = new SSMClient()
 
     if (environmentVariables) {
-      let parsedEnvironmentVariables = [];
+      let parsedEnvironmentVariables = []
       try {
         parsedEnvironmentVariables = JSON.parse(environmentVariables)
       } catch (e) {
@@ -24,21 +25,28 @@ export async function run(): Promise<void> {
       }
 
       for (const key in parsedEnvironmentVariables) {
+        if (ignoreRe.test(key)) {
+          core.debug(`ignoring ${key}`)
+          continue
+        }
+
         const envName = prefix + key
         core.debug(`putting ${envName} into SSM`)
 
         const value = parsedEnvironmentVariables[key]
-        ssm.putParameter({
+        const command = new PutParameterCommand({
           Name: envName,
           Value: value,
           Overwrite: true,
           Type: 'String'
         })
+        const response = await client.send(command)
+        core.debug(JSON.stringify(response))
       }
     }
 
     if (secrets) {
-      let parsedSecrets = [];
+      let parsedSecrets = []
       try {
         parsedSecrets = JSON.parse(secrets)
       } catch (e) {
@@ -46,7 +54,8 @@ export async function run(): Promise<void> {
       }
 
       for (const key in parsedSecrets) {
-        if (key == 'github_token') {
+        if (ignoreRe.test(key)) {
+          core.debug(`ignoring ${key}`)
           continue
         }
 
@@ -54,12 +63,14 @@ export async function run(): Promise<void> {
         core.debug(`putting secret ${secretName} into SSM`)
 
         const value = parsedSecrets[key]
-        ssm.putParameter({
+        const command = new PutParameterCommand({
           Name: secretName,
           Value: value,
           Overwrite: true,
           Type: 'SecureString'
         })
+        const response = await client.send(command)
+        core.debug(JSON.stringify(response))
       }
     }
   } catch (error) {

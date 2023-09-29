@@ -31,6 +31,10 @@ describe('action', () => {
       switch (name) {
         case 'environment-variables':
           return '{"ENV_ONE":"env one value","ENV_TWO":"env two value"}'
+        case 'prefix':
+          return '/test-please-delete/'
+        case 'ignore-pattern':
+          return '(github_token|AWS_ROLE_TO_ASSUME)'
         default:
           return ''
       }
@@ -39,8 +43,14 @@ describe('action', () => {
     await main.run()
     expect(runMock).toHaveReturned()
 
-    expect(debugMock).toHaveBeenNthCalledWith(1, `putting ENV_ONE into SSM`)
-    expect(debugMock).toHaveBeenNthCalledWith(2, `putting ENV_TWO into SSM`)
+    expect(debugMock).toHaveBeenNthCalledWith(
+      1,
+      `putting /test-please-delete/ENV_ONE into SSM`
+    )
+    expect(debugMock).toHaveBeenNthCalledWith(
+      3,
+      `putting /test-please-delete/ENV_TWO into SSM`
+    )
   })
 
   it('sets a failed status', async () => {
@@ -57,8 +67,8 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     expect(setFailedMock).toHaveBeenNthCalledWith(
-        1,
-        'environment-variables must be a valid JSON object'
+      1,
+      'environment-variables must be a valid JSON object'
     )
   })
 
@@ -67,7 +77,11 @@ describe('action', () => {
     getInputMock.mockImplementation((name: string): string => {
       switch (name) {
         case 'secrets':
-          return '{"SECRET_ONE":"secret one value","SECRET_TWO":"secret two value"}'
+          return '{"SECRET_ONE":"secret one value","SECRET_TWO":"secret two value","github_token":"should ignore this one"}'
+        case 'prefix':
+          return '/test-please-delete/'
+        case 'ignore-pattern':
+          return '(github_token|AWS_ROLE_TO_ASSUME)'
         default:
           return ''
       }
@@ -77,8 +91,14 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, `putting secret SECRET_ONE into SSM`)
-    expect(debugMock).toHaveBeenNthCalledWith(2, `putting secret SECRET_TWO into SSM`)
+    expect(debugMock).toHaveBeenNthCalledWith(
+      1,
+      `putting secret /test-please-delete/SECRET_ONE into SSM`
+    )
+    expect(debugMock).toHaveBeenNthCalledWith(
+      3,
+      `putting secret /test-please-delete/SECRET_TWO into SSM`
+    )
   })
 
   it('sets a failed status', async () => {

@@ -14,7 +14,10 @@ inputs:
     required: false
     description: 'Prefix to add to the parameter name. ex: /my-app/ (default: /)'
     default: '/'
-
+  ignore-pattern:
+    required: false
+    description: 'Ignore certain secrets or environment variables. Pass toJSON(ignore) from your workflow.'
+    default: '(github_token|AWS_ROLE_TO_ASSUME)'
 outputs:
   task-definition:
     description: 'The path to the rendered task definition file'

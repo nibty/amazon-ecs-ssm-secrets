@@ -49314,18 +49314,17 @@ async function updateTaskDef(taskDefinitionFile, containerName, prefix, environm
             containerDef.environment.push({ name, value });
         }
     }
-    for (const key in secrets) {
-        const name = prefix + key;
-        const valueFrom = await generateSecretArn(name);
+    for (const name in secrets) {
+        const valueFrom = await generateSecretArn(prefix + name);
         const variableDef = containerDef.secrets.find((e) => e.name === name);
         if (variableDef) {
             // If found, update
-            core.debug(`updating env ${name} in task definition`);
+            core.debug(`updating secret ${name} in task definition`);
             variableDef.valueFrom = valueFrom;
         }
         else {
             // Else, create
-            core.debug(`creating env ${name} in task definition`);
+            core.debug(`creating secret ${name} in task definition`);
             containerDef.secrets.push({ name, valueFrom });
         }
     }

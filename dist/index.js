@@ -49159,7 +49159,7 @@ async function run() {
                 parsedEnvironmentVariables = JSON.parse(environmentVariables);
             }
             catch (e) {
-                throw new Error('environment-variables must be a valid JSON object');
+                core.setFailed('environment-variables must be a valid JSON object');
             }
             for (const key in parsedEnvironmentVariables) {
                 if (ignoreRe.test(key)) {
@@ -49185,7 +49185,7 @@ async function run() {
                 parsedSecrets = JSON.parse(secrets);
             }
             catch (e) {
-                throw new Error('secrets must be a valid JSON object');
+                core.setFailed('secrets must be a valid JSON object');
             }
             for (const key in parsedSecrets) {
                 if (ignoreRe.test(key)) {

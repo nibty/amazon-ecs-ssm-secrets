@@ -63,6 +63,9 @@ describe('action', () => {
     })
 
     await main.run()
+    expect(core.setFailed).toBeCalledWith(
+      'environment-variables must be a valid JSON object'
+    )
     expect(runMock).toHaveReturned()
 
     expect(setFailedMock).toHaveBeenNthCalledWith(
@@ -112,6 +115,7 @@ describe('action', () => {
     })
 
     await main.run()
+    expect(core.setFailed).toBeCalledWith('secrets must be a valid JSON object')
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly

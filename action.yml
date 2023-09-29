@@ -1,18 +1,23 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Amazon SSM Secrets and Env Sync'
+description: 'Syncs secrets and environment variables from GitHub to AWS SSM Parameter Store'
+author: 'Nicholas Pettas'
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
-    required: true
-    default: '1000'
+  secrets:
+    description: 'Secrets to add to the container. Pass toJSON(secrets) from your workflow.'
+    required: false
+  environment-variables:
+    description: 'Environment variables to add to the container. Pass toJSON(var) from your workflow.'
+    required: false
+  prefix:
+    required: false
+    description: 'Prefix to add to the parameter name. ex: /my-app/ (default: /)'
+    default: '/'
 
-# Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  task-definition:
+    description: 'The path to the rendered task definition file'
 
 runs:
   using: node20

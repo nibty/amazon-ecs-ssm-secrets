@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
+import Ssm from 'aws-sdk/clients/ssm'
 
 /**
  * The main function for the action.
@@ -7,18 +7,61 @@ import { wait } from './wait'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    const environmentVariables = core.getInput('environment-variables', {
+      required: false
+    })
+    const secrets = core.getInput('secrets', { required: false })
+    const prefix = core.getInput('prefix', { required: false })
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    const ssm = new Ssm()
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    if (environmentVariables) {
+      let parsedEnvironmentVariables = [];
+      try {
+        parsedEnvironmentVariables = JSON.parse(environmentVariables)
+      } catch (e) {
+        throw new Error('environment-variables must be a valid JSON object')
+      }
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+      for (const key in parsedEnvironmentVariables) {
+        const envName = prefix + key
+        core.debug(`putting ${envName} into SSM`)
+
+        const value = parsedEnvironmentVariables[key]
+        ssm.putParameter({
+          Name: envName,
+          Value: value,
+          Overwrite: true,
+          Type: 'String'
+        })
+      }
+    }
+
+    if (secrets) {
+      let parsedSecrets = [];
+      try {
+        parsedSecrets = JSON.parse(secrets)
+      } catch (e) {
+        throw new Error('secrets must be a valid JSON object')
+      }
+
+      for (const key in parsedSecrets) {
+        if (key == 'github_token') {
+          continue
+        }
+
+        const secretName = prefix + key
+        core.debug(`putting secret ${secretName} into SSM`)
+
+        const value = parsedSecrets[key]
+        ssm.putParameter({
+          Name: secretName,
+          Value: value,
+          Overwrite: true,
+          Type: 'SecureString'
+        })
+      }
+    }
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)

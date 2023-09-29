@@ -26,12 +26,48 @@ describe('action', () => {
     jest.clearAllMocks()
   })
 
-  it('sets the time output', async () => {
+  it('sets the env vars', async () => {
+    getInputMock.mockImplementation((name: string): string => {
+      switch (name) {
+        case 'environment-variables':
+          return '{"ENV_ONE":"env one value","ENV_TWO":"env two value"}'
+        default:
+          return ''
+      }
+    })
+
+    await main.run()
+    expect(runMock).toHaveReturned()
+
+    expect(debugMock).toHaveBeenNthCalledWith(1, `putting ENV_ONE into SSM`)
+    expect(debugMock).toHaveBeenNthCalledWith(2, `putting ENV_TWO into SSM`)
+  })
+
+  it('sets a failed status', async () => {
+    getInputMock.mockImplementation((name: string): string => {
+      switch (name) {
+        case 'environment-variables':
+          return 'asdsad'
+        default:
+          return ''
+      }
+    })
+
+    await main.run()
+    expect(runMock).toHaveReturned()
+
+    expect(setFailedMock).toHaveBeenNthCalledWith(
+        1,
+        'environment-variables must be a valid JSON object'
+    )
+  })
+
+  it('sets the secrets', async () => {
     // Set the action's inputs as return values from core.getInput()
     getInputMock.mockImplementation((name: string): string => {
       switch (name) {
-        case 'milliseconds':
-          return '500'
+        case 'secrets':
+          return '{"SECRET_ONE":"secret one value","SECRET_TWO":"secret two value"}'
         default:
           return ''
       }
@@ -41,28 +77,16 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'Waiting 500 milliseconds ...')
-    expect(debugMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(timeRegex)
-    )
-    expect(debugMock).toHaveBeenNthCalledWith(
-      3,
-      expect.stringMatching(timeRegex)
-    )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      expect.stringMatching(timeRegex)
-    )
+    expect(debugMock).toHaveBeenNthCalledWith(1, `putting secret SECRET_ONE into SSM`)
+    expect(debugMock).toHaveBeenNthCalledWith(2, `putting secret SECRET_TWO into SSM`)
   })
 
   it('sets a failed status', async () => {
     // Set the action's inputs as return values from core.getInput()
     getInputMock.mockImplementation((name: string): string => {
       switch (name) {
-        case 'milliseconds':
-          return 'this is not a number'
+        case 'secrets':
+          return 'asdsadad'
         default:
           return ''
       }
@@ -74,7 +98,7 @@ describe('action', () => {
     // Verify that all of the core library functions were called correctly
     expect(setFailedMock).toHaveBeenNthCalledWith(
       1,
-      'milliseconds not a number'
+      'secrets must be a valid JSON object'
     )
   })
 })

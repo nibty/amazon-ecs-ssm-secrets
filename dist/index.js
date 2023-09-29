@@ -49133,10 +49133,17 @@ const defaultVars = {};
 async function run() {
     try {
         const environmentVariables = core.getInput('environment-variables', {
-            required: false
+            required: false,
+            trimWhitespace: true
         });
-        const secrets = core.getInput('secrets', { required: false });
-        const prefix = core.getInput('prefix', { required: false });
+        const secrets = core.getInput('secrets', {
+            required: false,
+            trimWhitespace: true
+        });
+        const prefix = core.getInput('prefix', {
+            required: false,
+            trimWhitespace: true
+        });
         const ignorePattern = core.getInput('ignore-pattern', { required: false });
         const taskDefinitionFile = core.getInput('task-definition', {
             required: false

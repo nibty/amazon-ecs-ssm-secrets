@@ -65,6 +65,8 @@ export async function run(): Promise<void> {
         })
         const response = await client.send(command)
         core.debug(JSON.stringify(response))
+        // slow the rate of insertions so aws doesn't get upset
+        await new Promise(f => setTimeout(f, 250))
       }
     }
 

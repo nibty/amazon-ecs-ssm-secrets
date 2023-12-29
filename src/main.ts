@@ -8,6 +8,12 @@ export interface Vars {
 
 const defaultVars: Vars = {}
 
+async function wait(timer: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(), timer);
+  });
+}
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -54,7 +60,7 @@ export async function run(): Promise<void> {
         }
 
         const envName = prefix + key
-        core.debug(`putting ${envName} into SSM`)
+        core.debug(`putting ${envName} into SSM 1`)
 
         const value = parsedEnvironmentVariables[key]
         const command = new PutParameterCommand({
@@ -67,7 +73,7 @@ export async function run(): Promise<void> {
         const response = await client.send(command)
         core.debug(JSON.stringify(response))
         // slow the rate of insertions so aws doesn't get upset
-        await new Promise(f => setTimeout(f, 1000))
+        await wait(1000);
       }
     }
 
@@ -97,6 +103,8 @@ export async function run(): Promise<void> {
         })
         const response = await client.send(command)
         core.debug(JSON.stringify(response))
+        // slow the rate of insertions so aws doesn't get upset
+        await wait(1000);
       }
     }
 

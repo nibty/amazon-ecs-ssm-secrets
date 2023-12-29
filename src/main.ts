@@ -10,8 +10,8 @@ const defaultVars: Vars = {}
 
 async function wait(timer: number): Promise<void> {
   return new Promise((resolve, reject) => {
-    setTimeout(() => resolve(), timer);
-  });
+    setTimeout(() => resolve(), timer)
+  })
 }
 
 /**
@@ -60,7 +60,7 @@ export async function run(): Promise<void> {
         }
 
         const envName = prefix + key
-        core.debug(`putting ${envName} into SSM 1`)
+        core.debug(`putting ${envName} into SSM`)
 
         const value = parsedEnvironmentVariables[key]
         const command = new PutParameterCommand({
@@ -73,7 +73,7 @@ export async function run(): Promise<void> {
         const response = await client.send(command)
         core.debug(JSON.stringify(response))
         // slow the rate of insertions so aws doesn't get upset
-        await wait(1000);
+        await wait(250)
       }
     }
 
@@ -104,7 +104,7 @@ export async function run(): Promise<void> {
         const response = await client.send(command)
         core.debug(JSON.stringify(response))
         // slow the rate of insertions so aws doesn't get upset
-        await wait(1000);
+        await wait(250)
       }
     }
 

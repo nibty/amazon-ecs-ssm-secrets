@@ -49126,6 +49126,11 @@ const core = __importStar(__nccwpck_require__(42186));
 const client_ssm_1 = __nccwpck_require__(20341);
 const task_def_1 = __nccwpck_require__(98332);
 const defaultVars = {};
+async function wait(timer) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(), timer);
+    });
+}
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -49178,6 +49183,8 @@ async function run() {
                 });
                 const response = await client.send(command);
                 core.debug(JSON.stringify(response));
+                // slow the rate of insertions so aws doesn't get upset
+                await wait(250);
             }
         }
         if (secrets) {
@@ -49204,6 +49211,8 @@ async function run() {
                 });
                 const response = await client.send(command);
                 core.debug(JSON.stringify(response));
+                // slow the rate of insertions so aws doesn't get upset
+                await wait(250);
             }
         }
         if (taskDefinitionFile && containerName) {

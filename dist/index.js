@@ -49309,7 +49309,7 @@ async function updateTaskDef(taskDefinitionFile, containerName, prefix, environm
         containerDef.secrets = [];
     }
     for (const key in environmentVariables) {
-        const name = prefix + key;
+        const name = key;
         const value = environmentVariables[key];
         const variableDef = containerDef.environment.find((e) => e.name === name);
         if (variableDef) {
